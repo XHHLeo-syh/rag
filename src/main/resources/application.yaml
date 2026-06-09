@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: rag
+  ai:
+    dashscope:
+      api-key: ${LLM_API_KEY}
