@@ -20,19 +20,26 @@ public class DocumentReaderController {
 
     @GetMapping("/document/reader")
     public String documentReader(String filePath) {
+        if (filePath == null || filePath.isBlank()) {
+            return "错误：filePath 参数不能为空";
+        }
+        File file = new File(filePath);
+        if (!file.exists() || !file.isFile()) {
+            return "错误：文件不存在或不是有效文件：" + filePath;
+        }
+
         List<Document> documents;
         try {
-            documents = documentReaderFactory.read(new File(filePath));
+            documents = documentReaderFactory.read(file);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            return "读取文件失败：" + e.getMessage();
+        } catch (IllegalArgumentException e) {
+            return e.getMessage();
         }
+
         StringBuilder sb = new StringBuilder();
         for (Document document : documents) {
-            sb.append(document.getText());
-            System.out.println(document.getText());
-            System.out.println(document.getMetadata());
-            System.out.println("========");
-            sb.append("========================");
+            sb.append(document.getText()).append("========================");
         }
         return sb.toString();
     }

@@ -23,15 +23,12 @@ import java.util.Objects;
 public class PdfReaderStrategy implements DocumentReaderStrategy {
     @Override
     public boolean apply(File file) throws IOException {
-
-        String name = file.getName()
-                          .toLowerCase();
-        if (name.endsWith(".pdf")) {
-            FileSignatureConstant signatureConstant = FileSignature.detect(file);
-            if (signatureConstant != null && Objects.equals(signatureConstant, FileSignatureConstant.PDF)) return true;
+        String name = file.getName().toLowerCase();
+        if (!name.endsWith(".pdf")) {
             return false;
         }
-        return false;
+        FileSignatureConstant signature = FileSignature.detect(file);
+        return signature == FileSignatureConstant.PDF;
     }
 
     @Override

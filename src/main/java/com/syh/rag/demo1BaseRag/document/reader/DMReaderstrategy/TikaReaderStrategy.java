@@ -19,13 +19,28 @@ public class TikaReaderStrategy implements DocumentReaderStrategy{
     public boolean apply(File file) throws IOException {
         String name = file.getName().toLowerCase();
         FileSignatureConstant signatureConstant = FileSignature.detect(file);
-        if ((name.endsWith(".doc") || name.endsWith(".docx")) && signatureConstant != null &&
-                (signatureConstant.equals(FileSignatureConstant.DOCX) || signatureConstant.equals(FileSignatureConstant.DOC)))
+        if (signatureConstant == null) {
+            return false;
+        }
+        // DOC/DOCX
+        if ((name.endsWith(".doc") || name.endsWith(".docx")) &&
+                (signatureConstant == FileSignatureConstant.DOC || signatureConstant == FileSignatureConstant.DOCX)) {
             return true;
-        else if (signatureConstant != null && name.endsWith(".pdf") && signatureConstant.equals(FileSignatureConstant.PDF))
+        }
+        // PPT/PPTX
+        if ((name.endsWith(".ppt") || name.endsWith(".pptx")) &&
+                (signatureConstant == FileSignatureConstant.PPT || signatureConstant == FileSignatureConstant.PPTX)) {
             return true;
-        else return name.endsWith(".ppt") || name.endsWith(".pptx") && signatureConstant != null &&
-                    (signatureConstant.equals(FileSignatureConstant.PPTX) || signatureConstant.equals(FileSignatureConstant.PPT));
+        }
+        // XLS/XLSX (如果需要支持 Excel)
+        if ((name.endsWith(".xls") || name.endsWith(".xlsx")) &&
+                (signatureConstant == FileSignatureConstant.XLS || signatureConstant == FileSignatureConstant.XLSX)) {
+            return true;
+        }
+        // 兜底：其他 Tika 支持但无专门策略的文件
+        return name.endsWith(".doc") || name.endsWith(".docx") ||
+               name.endsWith(".ppt") || name.endsWith(".pptx") ||
+               name.endsWith(".xls") || name.endsWith(".xlsx");
     }
 
     @Override
