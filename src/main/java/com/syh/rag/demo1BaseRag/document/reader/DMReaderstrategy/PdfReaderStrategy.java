@@ -8,8 +8,10 @@ import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
 import org.springframework.ai.reader.pdf.ParagraphPdfDocumentReader;
 import org.springframework.ai.reader.pdf.config.PdfDocumentReaderConfig;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,8 +24,9 @@ import java.util.Objects;
 @Service
 public class PdfReaderStrategy implements DocumentReaderStrategy {
     @Override
-    public boolean apply(File file) throws IOException {
-        String name = file.getName().toLowerCase();
+    public boolean apply(MultipartFile file) throws IOException {
+        String name = Objects.requireNonNull(file.getOriginalFilename())
+                             .toLowerCase();
         if (!name.endsWith(".pdf")) {
             return false;
         }
@@ -32,16 +35,15 @@ public class PdfReaderStrategy implements DocumentReaderStrategy {
     }
 
     @Override
-    public List<Document> read(File file) {
-        Resource resource = new FileSystemResource(file);
-
+    public List<Document> read(InputStreamResource resource) {
         // 读取配置
         PdfDocumentReaderConfig config = PdfDocumentReaderConfig.builder()
                                                                 .withPageTopMargin(50)         // 忽略顶部50个单位的页眉
                                                                 .withPageBottomMargin(50)      // 忽略底部50个单位的页脚
                                                                 .withPagesPerDocument(1)       // 每一页作为一个 Document
-                                                                .withPageExtractedTextFormatter(new ExtractedTextFormatter.Builder().withNumberOfTopTextLinesToDelete(0) // 每页再额外删掉前0行
-                                                                                                                                    .build())
+                                                                .withPageExtractedTextFormatter(new ExtractedTextFormatter.Builder()
+                                                                        .withNumberOfTopTextLinesToDelete(0) // 每页再额外删掉前0行
+                                                                        .build())
                                                                 .build();
         PagePdfDocumentReader pdfReader = new PagePdfDocumentReader(resource, config);
         return pdfReader.read();

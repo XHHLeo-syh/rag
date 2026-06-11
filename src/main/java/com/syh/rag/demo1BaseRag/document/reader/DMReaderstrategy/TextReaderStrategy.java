@@ -2,11 +2,11 @@ package com.syh.rag.demo1BaseRag.document.reader.DMReaderstrategy;
 
 import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.TextReader;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
-import java.io.File;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 文本文件读取策略
@@ -14,14 +14,14 @@ import java.util.List;
 @Service
 public class TextReaderStrategy implements DocumentReaderStrategy {
     @Override
-    public boolean apply(File file) {
-        String name = file.getName().toLowerCase();
+    public boolean apply(MultipartFile file) {
+        String name = Objects.requireNonNull(file.getOriginalFilename())
+                             .toLowerCase();
         return name.endsWith(".txt") || name.endsWith(".tex") || name.endsWith(".text");
     }
 
     @Override
-    public List<Document> read(File file) {
-        Resource resource =new FileSystemResource(file);
+    public List<Document> read(InputStreamResource resource) {
         TextReader textReader = new TextReader(resource);
         return textReader.get();
     }
