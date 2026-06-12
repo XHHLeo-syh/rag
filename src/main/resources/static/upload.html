@@ -26,7 +26,7 @@
             border-radius: 16px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             padding: 40px;
-            max-width: 500px;
+            max-width: 600px;
             width: 100%;
         }
 
@@ -48,7 +48,7 @@
         .upload-area {
             border: 2px dashed #ddd;
             border-radius: 12px;
-            padding: 40px 20px;
+            padding: 20px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -63,6 +63,26 @@
         .upload-area.dragover {
             border-color: #667eea;
             background: #f0f2ff;
+        }
+
+        .upload-area.hidden {
+            display: none;
+        }
+
+        .add-file-btn {
+            display: inline-block;
+            background: #f0f2ff;
+            color: #667eea;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .add-file-btn:hover {
+            background: #e0e4ff;
         }
 
         .upload-icon {
@@ -85,34 +105,47 @@
             display: none;
         }
 
-        .file-info {
+        /* 文件列表样式 */
+        .file-list {
             display: none;
-            background: #f8f9ff;
-            border-radius: 8px;
-            padding: 15px;
             margin-bottom: 20px;
         }
 
-        .file-info.show {
+        .file-list.show {
+            display: block;
+        }
+
+        .file-item {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            background: #f8f9ff;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+        }
+
+        .file-icon {
+            font-size: 24px;
+            margin-right: 12px;
+        }
+
+        .file-info {
+            flex: 1;
+            overflow: hidden;
         }
 
         .file-name {
             color: #333;
             font-size: 14px;
-            flex: 1;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            margin-right: 10px;
         }
 
         .file-size {
             color: #999;
             font-size: 12px;
-            margin-right: 15px;
+            margin-top: 2px;
         }
 
         .remove-btn {
@@ -120,13 +153,29 @@
             color: white;
             border: none;
             border-radius: 4px;
-            padding: 4px 10px;
+            padding: 6px 12px;
             cursor: pointer;
             font-size: 12px;
+            margin-left: 10px;
         }
 
         .remove-btn:hover {
             background: #ff3344;
+        }
+
+        .clear-all-btn {
+            background: #ffa502;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .clear-all-btn:hover {
+            background: #ff9900;
         }
 
         .submit-btn {
@@ -229,30 +278,72 @@
             border-radius: 4px;
             font-size: 12px;
         }
+
+        .progress-section {
+            display: none;
+            margin-bottom: 15px;
+        }
+
+        .progress-section.show {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1 class="title">文档向量化上传</h1>
-        <p class="subtitle">上传文档后自动执行向量化存储</p>
+        <p class="subtitle">支持多文件批量上传，自动执行向量化存储</p>
 
         <!-- 上传区域 -->
         <div class="upload-area" id="uploadArea">
             <div class="upload-icon">📄</div>
             <p class="upload-text">点击选择文件或拖拽文件到此处</p>
-            <p class="upload-hint">仅支持单个文件上传</p>
+            <p class="upload-hint">支持多文件同时上传</p>
+            <div class="add-file-btn" id="addFileBtn" style="display: none;">➕ 继续添加文件</div>
         </div>
-        <input type="file" id="fileInput" accept=".pdf,.txt,.md,.json,.html,.htm,.doc,.docx,.ppt,.pptx">
+        <input type="file" id="fileInput" multiple accept=".pdf,.txt,.md,.json,.html,.htm,.doc,.docx,.ppt,.pptx">
 
-        <!-- 文件信息 -->
-        <div class="file-info" id="fileInfo">
-            <span class="file-name" id="fileName"></span>
-            <span class="file-size" id="fileSize"></span>
-            <button class="remove-btn" id="removeBtn">删除</button>
+        <!-- 文件列表 -->
+        <div class="file-list" id="fileList">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span style="color: #666; font-size: 14px;">已选择 <span id="fileCount">0</span> 个文件</span>
+                <button class="clear-all-btn" id="clearAllBtn">清空全部</button>
+            </div>
+            <div id="fileItems"></div>
         </div>
 
         <!-- 提交按钮 -->
         <button class="submit-btn" id="submitBtn" disabled>开始向量化</button>
+
+        <!-- 进度显示 -->
+        <div class="progress-section" id="progressSection">
+            <div class="progress-text"><span id="currentProgress">0</span> / <span id="totalProgress">0</span> 处理中...</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
 
         <!-- 结果展示 -->
         <div class="result" id="result"></div>
@@ -277,26 +368,44 @@
     <script>
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
-        const fileInfo = document.getElementById('fileInfo');
-        const fileName = document.getElementById('fileName');
-        const fileSize = document.getElementById('fileSize');
-        const removeBtn = document.getElementById('removeBtn');
+        const addFileBtn = document.getElementById('addFileBtn');
+        const fileList = document.getElementById('fileList');
+        const fileItems = document.getElementById('fileItems');
+        const fileCount = document.getElementById('fileCount');
+        const clearAllBtn = document.getElementById('clearAllBtn');
         const submitBtn = document.getElementById('submitBtn');
         const result = document.getElementById('result');
+        const progressSection = document.getElementById('progressSection');
+        const progressFill = document.getElementById('progressFill');
+        const currentProgress = document.getElementById('currentProgress');
+        const totalProgress = document.getElementById('totalProgress');
 
-        let selectedFile = null;
+        // 存储选中的文件
+        let selectedFiles = [];
 
         // 点击上传区域触发文件选择
-        uploadArea.addEventListener('click', () => {
+        uploadArea.addEventListener('click', (e) => {
+            // 如果点击的是添加按钮，不触发文件选择（按钮有自己的事件）
+            if (e.target === addFileBtn || addFileBtn.contains(e.target)) {
+                return;
+            }
+            fileInput.click();
+        });
+
+        // 添加文件按钮点击
+        addFileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             fileInput.click();
         });
 
         // 文件选择处理
         fileInput.addEventListener('change', (e) => {
-            const files = e.target.files;
+            const files = Array.from(e.target.files);
             if (files.length > 0) {
-                handleFile(files[0]);
+                addFiles(files);
             }
+            // 清空 value，允许重复选择同一文件
+            fileInput.value = '';
         });
 
         // 拖拽功能
@@ -312,22 +421,71 @@
         uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
-            const files = e.dataTransfer.files;
+            const files = Array.from(e.dataTransfer.files);
             if (files.length > 0) {
-                handleFile(files[0]);
+                addFiles(files);
             }
         });
 
-        // 处理文件
-        function handleFile(file) {
-            selectedFile = file;
-            fileName.textContent = file.name;
-            fileSize.textContent = formatFileSize(file.size);
-            fileInfo.classList.add('show');
-            uploadArea.style.display = 'none';
+        // 添加文件到列表
+        function addFiles(files) {
+            files.forEach(file => {
+                selectedFiles.push({
+                    file: file,
+                    id: Date.now() + Math.random()
+                });
+            });
+            renderFileList();
+        }
+
+        // 渲染文件列表
+        function renderFileList() {
+            if (selectedFiles.length === 0) {
+                fileList.classList.remove('show');
+                // 没有文件时，隐藏添加按钮，显示原始上传区域
+                addFileBtn.style.display = 'none';
+                submitBtn.disabled = true;
+                return;
+            }
+
+            fileList.classList.add('show');
+            addFileBtn.style.display = 'inline-block';
             submitBtn.disabled = false;
+            fileCount.textContent = selectedFiles.length;
+
+            fileItems.innerHTML = selectedFiles.map(item => `
+                <div class="file-item">
+                    <span class="file-icon">📄</span>
+                    <div class="file-info">
+                        <div class="file-name" title="${item.file.name}">${item.file.name}</div>
+                        <div class="file-size">${formatFileSize(item.file.size)}</div>
+                    </div>
+                    <button class="remove-btn" data-id="${item.id}">删除</button>
+                </div>
+            `).join('');
+
+            // 绑定删除事件
+            fileItems.querySelectorAll('.remove-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseFloat(e.target.dataset.id);
+                    removeFile(id);
+                });
+            });
+        }
+
+        // 删除单个文件
+        function removeFile(id) {
+            selectedFiles = selectedFiles.filter(item => item.id !== id);
+            renderFileList();
             result.classList.remove('show');
         }
+
+        // 清空全部文件
+        clearAllBtn.addEventListener('click', () => {
+            selectedFiles = [];
+            renderFileList();
+            result.classList.remove('show');
+        });
 
         // 格式化文件大小
         function formatFileSize(bytes) {
@@ -336,55 +494,78 @@
             return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
         }
 
-        // 删除文件
-        removeBtn.addEventListener('click', () => {
-            selectedFile = null;
-            fileInput.value = '';
-            fileInfo.classList.remove('show');
-            uploadArea.style.display = 'block';
-            submitBtn.disabled = true;
-            result.classList.remove('show');
-        });
-
         // 提交上传
         submitBtn.addEventListener('click', async () => {
-            if (!selectedFile) return;
+            if (selectedFiles.length === 0) return;
 
             submitBtn.disabled = true;
             submitBtn.classList.add('loading');
+            progressSection.classList.add('show');
             result.classList.remove('show', 'success', 'error');
 
-            const formData = new FormData();
-            formData.append('file', selectedFile);
+            // 重置进度显示
+            currentProgress.textContent = 0;
+            totalProgress.textContent = selectedFiles.length;
+            progressFill.style.width = '0%';
 
-            try {
-                const response = await fetch('/embedding/upload', {
-                    method: 'POST',
-                    body: formData
-                });
+            const totalFiles = selectedFiles.length;
+            let successCount = 0;
+            let failCount = 0;
+            const resultsDetail = [];
 
-                const resultText = await response.text();
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const item = selectedFiles[i];
+                const formData = new FormData();
+                formData.append('file', item.file);
 
-                result.classList.add('show');
-                if (resultText === 'success') {
-                    result.textContent = '✅ 向量化处理成功！';
-                    result.classList.add('success');
-                    // 成功后重置状态
-                    setTimeout(() => {
-                        removeBtn.click();
-                    }, 2000);
-                } else {
-                    result.textContent = '❌ 处理失败：' + resultText.replace('error: ', '');
-                    result.classList.add('error');
+                try {
+                    const response = await fetch('/embedding/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    // 解析 JSON 响应
+                    const results = await response.json();
+
+                    // 处理返回的每个文件结果
+                    results.forEach(r => {
+                        if (r.success) {
+                            successCount++;
+                            resultsDetail.push(`✅ ${r.fileName}: ${r.message}`);
+                        } else {
+                            failCount++;
+                            resultsDetail.push(`❌ ${r.fileName}: ${r.message}`);
+                        }
+                    });
+
+                } catch (error) {
+                    failCount++;
+                    resultsDetail.push(`❌ ${item.file.name}: 请求失败 - ${error.message}`);
                 }
-            } catch (error) {
-                result.classList.add('show');
-                result.textContent = '❌ 请求失败：' + error.message;
-                result.classList.add('error');
-            } finally {
-                submitBtn.classList.remove('loading');
-                submitBtn.disabled = false;
+
+                // 更新进度
+                currentProgress.textContent = i + 1;
+                progressFill.style.width = ((i + 1) / totalFiles * 100) + '%';
             }
+
+            // 显示结果
+            progressSection.classList.remove('show');
+            result.classList.add('show');
+
+            if (failCount === 0) {
+                result.innerHTML = `<strong>✅ 全部处理成功！共 ${successCount} 个文件</strong>`;
+                result.classList.add('success');
+                // 成功后清空
+                setTimeout(() => {
+                    clearAllBtn.click();
+                }, 2000);
+            } else {
+                result.innerHTML = `<strong>❌ 处理完成：成功 ${successCount} 个，失败 ${failCount} 个</strong><br><br>${resultsDetail.join('<br>')}`;
+                result.classList.add('error');
+            }
+
+            submitBtn.classList.remove('loading');
+            submitBtn.disabled = false;
         });
     </script>
 </body>
